@@ -9,7 +9,7 @@
   Based on Sparkfun's "RC Hobby Controllers and Arduino": https://www.sparkfun.com/tutorials/348
 */
 
-// #define DEBUG
+#define DEBUG
 
 #define PIN_CH1 7
 #define PIN_CH2 6
@@ -171,3 +171,4 @@ void loop() {
   delay(500);
 #endif
 }
+
