@@ -26,6 +26,9 @@ motor_height = 25;
 motor_top_height = 4.5;
 motor_top_overhang = 1.55;
 
+motor_holder_radius = 9.85 / 2;
+motor_holder_cutoff = 1;
+
 module pillar(x,y) {
   // TODO: Wider base
   //linear_extrude(height = 10, center = true, convexity = 10, scale=3)
@@ -125,6 +128,8 @@ difference() {
         cube([motor_length*1.2, motor_width/1.10, motor_height + motor_top_height - base_height], center=true);
       };
 
+      // Top of the motor holder indentation to keep motor from moving around
+/*
       translate([0,0,motor_height-motor_top_height/2]) {
         difference() {
           cylinder(r=motor_length/4, h=motor_top_height);
@@ -133,6 +138,19 @@ difference() {
           }
         };
       }
+*/
+
+    translate([0,0,motor_height-motor_top_height/2]) {
+      difference() {
+        cylinder(r=motor_holder_radius, h=motor_top_height);
+
+        translate([-motor_holder_radius, -motor_holder_radius, 0]) {
+          cube([motor_holder_radius*2, motor_holder_cutoff, motor_top_height]);
+        }
+        //translate([-motor_length/3.5,-motor_length/3.5,0]) {
+        //}
+      };
+    }
   };
 }
 
@@ -148,37 +166,28 @@ pillar_screw_holes(0, -base_side/2 + pillar_base_offset + pillar_side/2);
 
 // Fin
 // TODO: Align properly, we turn not in the center but on the side of the fin
+
 translate([-base_side/2 - latch_depth, -base_side/2 - latch_depth, 0]) {
-  translate([latch_fin_width/2, -latch_fin_width/2, 0]) {
+  translate([latch_fin_width/2, -latch_fin_width/2, -latch_depth - 1]) {
     rotate(a=45, v = [0,0,1]) {
-      cube([latch_fin_length, latch_fin_width, base_height]); // TODO: Length of fin is inaccurate
+      cube([latch_fin_length, latch_fin_width, base_height + latch_depth + 2]); // TODO: Length of fin is inaccurate
     }
   }
 }
 
-// Motor hole
-/*hull() {
-  translate([-motor_length/2+motor_width/2, 0, 0]) {
-    cylinder(r=motor_width/2, h=motor_height);
-  }
-  translate([motor_length/2-motor_width/2, 0, 0]) {
-    cylinder(r=motor_width/2, h=motor_height);
-  }
-}
-*/
-
-translate([-motor_length/2, -motor_width/2, 0]) { // }(motor_height+base_height)/2]) {
+// Motor holder block
+translate([-motor_length/2, -motor_width/2, -latch_depth]) { // }(motor_height+base_height)/2]) {
 
   union() {
     intersection() {
-      cube([motor_length, motor_width, motor_height]);
+      cube([motor_length, motor_width, motor_height+latch_depth]);
       translate([motor_length/2, motor_width/2,0]) {
-        cylinder(r=motor_length/2, h=motor_height);
+        cylinder(r=motor_length/2, h=motor_height+latch_depth);
       }
     };
 
     translate([(motor_length - motor_width)/2, motor_width, 0]) {
-      cube([motor_width, motor_top_overhang, motor_height]);
+      cube([motor_width, motor_top_overhang, motor_height+latch_depth]);
     }
   }
 };
