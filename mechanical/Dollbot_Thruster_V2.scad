@@ -1,6 +1,6 @@
 include <nutsnbolts/cyl_head_bolt.scad>;
 
-// $fn = 400;
+$fn = 400;
 
 base_side = 50;
 base_height = 5;
@@ -15,7 +15,7 @@ pillar_screw_details = _get_screw(pillar_screw_name);
 pillar_screw_fam = _get_screw_fam(pillar_screw_name);
 
 latch_depth = 2.20;
-latch_side = 16 + latch_depth;
+latch_side = 15 + latch_depth;
 latch_fin_length = latch_side;
 latch_fin_width = 2;
 
