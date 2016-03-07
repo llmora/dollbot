@@ -2,7 +2,7 @@ include <nutsnbolts/cyl_head_bolt.scad>;
 
 // $fn = 400;
 
-base_side = 45;
+base_side = 50;
 base_height = 5;
 
 pillar_side = 8;
