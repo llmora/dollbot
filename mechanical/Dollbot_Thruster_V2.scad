@@ -1,16 +1,26 @@
+/*
+
+TODO: Lip for exterior thruster
+TODO: Stencil for drilling holes in hull
+
+*/
+
 include <nutsnbolts/cyl_head_bolt.scad>;
 
-$fn = 400;
+// $fn = 400;
+
+piece_separation = 50;
 
 base_side = 50;
 base_height = 5;
 
 pillar_side = 8;
 pillar_height = 10; // Should be 30
-pillar_base_offset = 3;
+pillar_base_offset = 1;
+pillar_base_offset_side = 3;
 
 pillar_screw_offset = 10;
-pillar_screw_name="M3x25";
+pillar_screw_name="M3x30";
 pillar_screw_details = _get_screw(pillar_screw_name);
 pillar_screw_fam = _get_screw_fam(pillar_screw_name);
 
@@ -23,13 +33,24 @@ motor_width = 15.05;
 motor_length = 20;
 motor_height = 25;
 
-motor_offset = 5;
+motor_offset = 4;
 
 motor_top_height = 4.5;
 motor_top_overhang = 1.55;
 
 motor_holder_radius = 9.85 / 2;
 motor_holder_cutoff = 1;
+
+thruster_jet_side = 10;
+thruster_top_height = 2;
+thruster_bottom_height = 5;
+thruster_height = thruster_top_height + thruster_jet_side + thruster_bottom_height;
+thruster_paddle_radius = 15;
+thruster_hull_radius = 15;
+thruster_pin_depth = 2;
+thruster_pin_radius = 1.5;
+
+rubber_rim_width = 0.6;
 
 module pillar(x,y) {
   translate([x-(pillar_side/2), y-(pillar_side/2), base_height]) {
@@ -42,8 +63,15 @@ module pillar_screw_holes(x, y) {
   df = _get_screw_fam(pillar_screw_name);
 
   union() {
-    translate([x, y, 15]) {
-      hole_through(df[_NB_F_DESC], l=ds[_NB_S_LENGTH], h=df[_NB_F_HEAD_HEIGHT]);
+    //translate([x, y, 15.0001 + df[_NB_F_HEAD_HEIGHT]]) {
+    translate([x, y, pillar_height + base_height/2 + df[_NB_F_HEAD_HEIGHT] - 0.4999]) {
+      nut(df[_NB_F_DESC]);
+//      hole_through(df[_NB_F_DESC], l=ds[_NB_S_LENGTH] + 100, h=df[_NB_F_HEAD_HEIGHT]);
+      translate([0,0,-piece_separation - thruster_height + df[_NB_F_HEAD_HEIGHT] - 1.0001]) {
+        rotate(a=180, v=[1,0,0]) {
+        hole_through(df[_NB_F_DESC], l=ds[_NB_S_LENGTH] + 100, h=df[_NB_F_HEAD_HEIGHT]);
+        }
+      }
     };
   }
 }
@@ -56,9 +84,6 @@ difference() {
   union() {
     translate([0,0,base_height/2]) {
       intersection() {
-        translate([0,0,-latch_depth/2]) {
-          cylinder(r=base_side/2 + (base_side/6), h=base_height + latch_depth, center=true);
-        }
         union() {
           cube([base_side, base_side, base_height], center=true);
 
@@ -96,8 +121,8 @@ difference() {
     // Pillars for screws
 
     pillar(base_side/2 - pillar_side/2 - pillar_base_offset, base_side/2 - pillar_side/2 - pillar_base_offset);
-    pillar(-base_side/2 + pillar_base_offset + pillar_side/2, 0);
-    pillar(0, -base_side/2 + pillar_base_offset + pillar_side/2);
+    pillar(-base_side/2 + pillar_base_offset + pillar_side/2, -pillar_base_offset_side * 2);
+    pillar(-pillar_base_offset_side * 2, -base_side/2 + pillar_base_offset + pillar_side/2);
 
     // DC130 motor holder
     translate([motor_offset, motor_offset, 0]) {
@@ -121,21 +146,24 @@ difference() {
         };
       }
     }
+
+    translate([base_side/2,-base_side/2,-piece_separation]) {
+      rotate(a=90, v=[0,0,1]) {
+        thruster();
+      }
+    }
 }
 
   // Screw holes
 
   pillar_screw_holes(base_side/2 - pillar_side/2 - pillar_base_offset, base_side/2 - pillar_side/2 - pillar_base_offset);
-  pillar_screw_holes(-base_side/2 + pillar_base_offset + pillar_side/2, 0);
-  pillar_screw_holes(0, -base_side/2 + pillar_base_offset + pillar_side/2);
-
-  // Fin
-  // TODO: Align properly, we turn not in the center but on the side of the fin
+  pillar_screw_holes(-base_side/2 + pillar_base_offset + pillar_side/2, -pillar_base_offset_side * 2);
+  pillar_screw_holes(-pillar_base_offset_side * 2, -base_side/2 + pillar_base_offset + pillar_side/2);
 
   translate([-base_side/2 - latch_depth, -base_side/2 - latch_depth, 0]) {
     translate([latch_fin_width/2, -latch_fin_width/2, -latch_depth - 1]) {
       rotate(a=45, v = [0,0,1]) {
-        cube([latch_fin_length, latch_fin_width, base_height + latch_depth + 2]); // TODO: Length of fin is inaccurate
+        cube([latch_fin_length, latch_fin_width, base_height + latch_depth + 2]);
       }
     }
   }
@@ -161,5 +189,52 @@ difference() {
         }
       };
     }
+  }
+
+}
+
+
+// Module: External thruster
+module thruster() {
+
+  difference() {
+
+    cube([base_side, base_side, thruster_height]);
+
+    rubber_rim(pillar_base_offset + pillar_side/2, base_side/2 + pillar_side/2 + pillar_base_offset * 2, thruster_height);
+    rubber_rim(base_side/2 - pillar_base_offset * 2 - pillar_side/2 , base_side - pillar_side/2 - pillar_base_offset, thruster_height);
+    rubber_rim(base_side - pillar_side/2 - pillar_base_offset, pillar_side/2 + pillar_base_offset, thruster_height);
+
+    translate([thruster_hull_radius-0.0001, base_side - thruster_hull_radius, 0]) {
+      rotate(a=90, v=[0,0,1]) {
+        difference() {
+          cube([thruster_hull_radius, thruster_hull_radius, thruster_height]);
+          cylinder(r=thruster_hull_radius, h=thruster_height);
+        }
+      }
+    }
+
+    translate([0,0,thruster_bottom_height]) {
+      rotate(a=45, v=[0,0,1]) {
+        cube([sqrt(2 * pow(base_side, 2)), thruster_jet_side, thruster_jet_side]);
+      }
+    }
+
+    translate([base_side/2 + motor_offset, base_side/2 - motor_offset, thruster_bottom_height]) {
+      cylinder(r=thruster_paddle_radius, h = thruster_top_height + thruster_jet_side);
+      translate([0,0,-thruster_pin_depth]) {
+        cylinder(r=1.5, h=thruster_pin_depth);
+      }
+    }
+  }
+}
+
+module rubber_rim(x, y, z) {
+  df = _get_screw_fam(pillar_screw_name);
+
+  translate([x, y, z]) {
+    rotate_extrude(convexity = 10)
+    translate([df[_NB_F_OUTER_DIA] + rubber_rim_width, 0, 0])
+    circle(r = rubber_rim_width);
   }
 }
