@@ -1,13 +1,11 @@
 /*
-
-TODO: Lip for exterior thruster
 TODO: Stencil for drilling holes in hull
-
+TODO: Spinning paddle
 */
 
 include <nutsnbolts/cyl_head_bolt.scad>;
 
-// $fn = 400;
+$fn = 60;
 
 piece_separation = 50;
 
@@ -199,11 +197,17 @@ module thruster() {
 
   difference() {
 
-    cube([base_side, base_side, thruster_height]);
+    union() {
+      cube([base_side, base_side, thruster_height]);
+
+      translate([latch_side,0,thruster_height]) {
+        cube([base_side - latch_side, base_side - latch_side, latch_depth]);
+      }
+    }
 
     rubber_rim(pillar_base_offset + pillar_side/2, base_side/2 + pillar_side/2 + pillar_base_offset * 2, thruster_height);
     rubber_rim(base_side/2 - pillar_base_offset * 2 - pillar_side/2 , base_side - pillar_side/2 - pillar_base_offset, thruster_height);
-    rubber_rim(base_side - pillar_side/2 - pillar_base_offset, pillar_side/2 + pillar_base_offset, thruster_height);
+    rubber_rim(base_side - pillar_side/2 - pillar_base_offset, pillar_side/2 + pillar_base_offset, thruster_height + latch_depth);
 
     translate([thruster_hull_radius-0.0001, base_side - thruster_hull_radius, 0]) {
       rotate(a=90, v=[0,0,1]) {
@@ -221,7 +225,7 @@ module thruster() {
     }
 
     translate([base_side/2 + motor_offset, base_side/2 - motor_offset, thruster_bottom_height]) {
-      cylinder(r=thruster_paddle_radius, h = thruster_top_height + thruster_jet_side);
+      cylinder(r=thruster_paddle_radius, h = thruster_top_height + thruster_jet_side + latch_depth);
       translate([0,0,-thruster_pin_depth]) {
         cylinder(r=1.5, h=thruster_pin_depth);
       }
