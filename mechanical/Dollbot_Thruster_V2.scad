@@ -38,6 +38,7 @@ motor_top_overhang = 1.55;
 motor_holder_radius = 9.85 / 2;
 motor_holder_cutoff = 1;
 motor_shaft_radius = 1;
+motor_shaft_length = 8.4;
 motor_shaft_cover_radius = motor_shaft_radius * 3;
 
 thruster_jet_side = 10;
@@ -50,7 +51,7 @@ thruster_pin_depth = 2;
 thruster_pin_radius = 1.5;
 
 rubber_rim_width = 0.6;
-drilling_template_height = base_height;
+drilling_stencil_height = base_height;
 
 module pillar(x,y) {
   translate([x-(pillar_side/2), y-(pillar_side/2), base_height]) {
@@ -198,10 +199,6 @@ module thruster(show_motor_gap) {
         cylinder(r = motor_shaft_cover_radius, h = 100);
       }
 
-      translate([-base_side/4,10,base_height/2]) {
-         text("TOP");
-
-      }
     }
 
   }
@@ -249,7 +246,7 @@ module external_thruster() {
     translate([base_side/2 + motor_offset, base_side/2 - motor_offset, thruster_bottom_height]) {
       cylinder(r=thruster_paddle_radius, h = thruster_top_height + thruster_jet_side + latch_depth);
       translate([0,0,-thruster_pin_depth]) {
-        cylinder(r=1.5, h=thruster_pin_depth);
+        cylinder(r=thruster_pin_radius, h=thruster_pin_depth);
       }
     }
   }
@@ -265,18 +262,26 @@ module rubber_rim(x, y, z) {
   }
 }
 
-module drilling_template() {
+module drilling_stencil() {
   intersection() {
     thruster(false);
     translate([-base_side, -base_side, -base_height/2]) {
-      cube([base_side * 2, base_side * 2, drilling_template_height]);
+      cube([base_side * 2, base_side * 2, drilling_stencil_height]);
     }
   }
 }
 
+thruster_pin_depth = 2;
+thruster_pin_radius = 1.5;
+
 turbine_radius = 3;
-turbine_height = 15;
-turbine_top_radius = 1;
+turbine_height = 13;
+turbine_top_radius = thruster_pin_radius * 0.9;
+turbine_wings = 2;
+turbine_wing_height = turbine_height - 3.50;
+turbine_wing_length = 14;
+turbine_wing_width = 4;
+turbine_bottom_offset = 0;
 
 translate([40,40,40]) {
 //  turbine();
@@ -284,24 +289,42 @@ translate([40,40,40]) {
 
 module turbine() {
   // Center circle
-  cylinder(r=turbine_radius, h=turbine_height - (2 * turbine_top_radius));
+  difference() {
+    union() {
+      cylinder(r=turbine_radius, h=turbine_height - 2 * thruster_pin_depth);
+      // Top protuberance
+      translate([0,0,turbine_height - (2 * thruster_pin_depth)]) {
+        cylinder(r=turbine_top_radius, h = 2 * thruster_pin_depth);
+        cylinder(r1=turbine_radius, r2=turbine_top_radius, h=thruster_pin_depth * 0.9);
+      }
 
-  // Top protuberance
-  translate([0,0,turbine_height - (2 * turbine_top_radius)]) {
-    cylinder(r=2 * turbine_top_radius, h = turbine_top_radius);
-    translate([0,0,turbine_top_radius]) {
-      sphere(r=turbine_top_radius);
-
+      // Rotate 6 times and do the sides
+      for(angle =  [360/turbine_wings: 360/turbine_wings : 360]) {
+          rotate(angle, [0, 0, 1]) {
+            translate([0, -turbine_wing_width/2, turbine_bottom_offset]) {
+              cube([turbine_wing_length - turbine_wing_width/2, turbine_wing_width, turbine_wing_height]);
+              translate([turbine_wing_length - turbine_wing_width/2, turbine_wing_width/2,0]) {
+                cylinder(r=turbine_wing_width/2, h=turbine_wing_height);
+              }
+          }
+        }
+      }
     }
-  }
-  // Rotate 6 times and do the sides
   // holes
 
-
+  cylinder(r=motor_shaft_radius * 1.1, h=motor_shaft_length - 2);
+}
 }
 
-thruster(true);
+/* Actual code, create the thruster (which includes both internal and external components),
+   the turbine and the drilling stencil */
+
+//thruster(true);
+
+translate([40, 40, 40]) {
+  turbine();
+}
 
 translate([0, 0, piece_separation]) {
-  drilling_template();
+//  drilling_stencil();
 }
