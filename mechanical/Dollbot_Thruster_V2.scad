@@ -49,6 +49,18 @@ thruster_pin_radius = 1.5;
 rubber_rim_width = 0.6;
 drilling_stencil_height = base_height;
 
+thruster_pin_depth = 2;
+thruster_pin_radius = 1.5;
+
+turbine_radius = 3;
+turbine_height = 13;
+turbine_top_radius = thruster_pin_radius * 0.9;
+turbine_wings = 2;
+turbine_wing_height = turbine_height - 3.50;
+turbine_wing_length = 14;
+turbine_wing_width = 4;
+turbine_bottom_offset = 0;
+
 module pillar(x,y) {
   translate([x-(pillar_side/2), y-(pillar_side/2), base_height]) {
     cube([pillar_side, pillar_side, pillar_height]);
@@ -266,22 +278,6 @@ module drilling_stencil() {
       cube([base_side * 2, base_side * 2, drilling_stencil_height]);
     }
   }
-}
-
-thruster_pin_depth = 2;
-thruster_pin_radius = 1.5;
-
-turbine_radius = 3;
-turbine_height = 13;
-turbine_top_radius = thruster_pin_radius * 0.9;
-turbine_wings = 2;
-turbine_wing_height = turbine_height - 3.50;
-turbine_wing_length = 14;
-turbine_wing_width = 4;
-turbine_bottom_offset = 0;
-
-translate([40,40,40]) {
-//  turbine();
 }
 
 module turbine() {
