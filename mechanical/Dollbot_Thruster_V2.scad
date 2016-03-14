@@ -1,7 +1,3 @@
-/*
-TODO: Spinning turbine
-*/
-
 include <nutsnbolts/cyl_head_bolt.scad>;
 
 $fn = 60;
@@ -320,10 +316,10 @@ module turbine() {
 /* Actual code, create the thruster (which includes both internal and external components),
    the turbine and the drilling stencil */
 
-//thruster(true);
+thruster(true);
 
-translate([40, 40, 40]) {
-//  turbine();
+translate([0, 0, piece_separation * 1.5]) {
+  turbine();
 }
 
 translate([0, 0, piece_separation]) {
