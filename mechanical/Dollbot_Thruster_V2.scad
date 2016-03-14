@@ -22,7 +22,7 @@ pillar_screw_details = _get_screw(pillar_screw_name);
 pillar_screw_fam = _get_screw_fam(pillar_screw_name);
 
 latch_depth = 2.20;
-latch_side = 14 + latch_depth;
+latch_side = 12 + latch_depth;
 latch_fin_length = latch_side;
 latch_fin_width = 2;
 
@@ -196,7 +196,8 @@ module thruster(show_motor_gap) {
     } else {
       // Hole for drilling template instead of the motor holder block
       translate([motor_offset, motor_offset, -base_height/2]) {
-        cylinder(r = motor_shaft_cover_radius, h = 100);
+        // cylinder(r = motor_shaft_cover_radius, h = 100);
+        cylinder(r = motor_shaft_radius, h = 100);
       }
 
     }
@@ -322,9 +323,9 @@ module turbine() {
 //thruster(true);
 
 translate([40, 40, 40]) {
-  turbine();
+//  turbine();
 }
 
 translate([0, 0, piece_separation]) {
-//  drilling_stencil();
+  drilling_stencil();
 }
