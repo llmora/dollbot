@@ -1,3 +1,17 @@
+/*
+  Holonomic thruster for Dollbot (http://splashbots.blogspot.com/)
+
+  The drawing includes the internal and external components for the thruster as well as the turbines and a stencil to help drill the appropriate holes on the boat hull.
+
+  You should print 4 of each of the components (except for the stencil, of which you need only one). Recommendations are:
+
+  * 4 x External thruster: 20% fill, Supports
+  * 4 x Internal thruster: 20% fill, Supports
+  * 4 x Turbines: 20% fill, No Supports
+  * 1 x Stencil: 20% fill, No Supports
+
+*/
+
 include <nutsnbolts/cyl_head_bolt.scad>;
 
 $fn = 60;
@@ -75,10 +89,10 @@ module pillar_screw_holes(x, y) {
     //translate([x, y, 15.0001 + df[_NB_F_HEAD_HEIGHT]]) {
     translate([x, y, pillar_height + base_height/2 + df[_NB_F_HEAD_HEIGHT] - 0.4999]) {
       nut(df[_NB_F_DESC]);
-      hole_through(df[_NB_F_DESC], l=ds[_NB_S_LENGTH] + 100, h=df[_NB_F_HEAD_HEIGHT]);
+      hole_through(df[_NB_F_DESC], l=ds[_NB_S_LENGTH] + 100);// h=df[_NB_F_HEAD_HEIGHT]);
       translate([0,0,-piece_separation - thruster_height + df[_NB_F_HEAD_HEIGHT] - 1.1]) {
         rotate(a=180, v=[1,0,0]) {
-        hole_through(df[_NB_F_DESC], l=ds[_NB_S_LENGTH] + 100, h=df[_NB_F_HEAD_HEIGHT]);
+        hole_through(df[_NB_F_DESC], l=ds[_NB_S_LENGTH] + 100);//, h=df[_NB_F_HEAD_HEIGHT]);
         }
       }
     };
@@ -158,7 +172,7 @@ module thruster(show_motor_gap) {
 
       translate([base_side/2,-base_side/2,-piece_separation]) {
         rotate(a=90, v=[0,0,1]) {
-          external_thruster();
+          // external_thruster();
         }
       }
   }
@@ -313,7 +327,7 @@ module turbine() {
    the turbine and the drilling stencil */
 
 thruster(true);
-
+/*
 translate([0, 0, piece_separation * 1.5]) {
   turbine();
 }
@@ -321,3 +335,4 @@ translate([0, 0, piece_separation * 1.5]) {
 translate([0, 0, piece_separation]) {
   drilling_stencil();
 }
+*/
