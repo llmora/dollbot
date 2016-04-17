@@ -1,7 +1,8 @@
 /*
   dollbot_motor_test: Test the four motors in both directions.
   
-  This sketch sequentially powers up and down the four motors in dollbot. Use it to verify correct installation of the thrusters, motors, motor shield and batteries.
+  This sketch sequentially powers up and down the four motors in dollbot. Use it to verify correct installation of the thrusters, motors, motor shield and batteries. This also makes for a nice way of testing the waterproofing of the motors while spinning, just make sure your electronics and batteries 
+  are wateproofed.
   
   http://splashbots.blogspot.com/
   
@@ -47,15 +48,14 @@ void motorTest(int motorNumber) {
  delay(TEST_DELAY);
  motor->run(RELEASE);
  delay(TEST_DELAY);
-
 }
 
 void loop() {
-  
+
     for (int i=1; i <= 4; i++) {
         motorTest(i);
     }
 
- delay(2 * TEST_DELAY);
+    delay(2 * TEST_DELAY);
 }
 

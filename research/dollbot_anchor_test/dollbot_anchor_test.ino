@@ -1,17 +1,21 @@
 /*
-  dollbot_rc_test: Control dollbot using like an RC boat
-  
-  This sketch uses a RC receiver to control the direction and rotation of the dollbot. The discrete X/Y/Rotation values received from
-  the transmitter are converted into vectors that are used by the propulsion system to move the boat in a holonomic fashion.
+  dollbot_anchor_test: Anchor dollbot in a specific heading
+
+  Control the dollbot via the remote control interface, once control is released the dollbot will stay anchored in the same position using its built-in
+  magnetic compass.
   
   http://splashbots.blogspot.com/
   
   Based on Sparkfun's "RC Hobby Controllers and Arduino": https://www.sparkfun.com/tutorials/348
   Requires Adafruit MotorShield v2: http://www.adafruit.com/products/1438
+  Requires Adafruit HMC5883 and Adafruit sensor library https://learn.adafruit.com/adafruit-hmc5883l-breakout-triple-axis-magnetometer-compass-sensor/
+
 */
 
 #include <Wire.h>
 #include <Adafruit_MotorShield.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_HMC5883_U.h>
 
 #define DEBUG
 
@@ -40,9 +44,16 @@ int horizontalMove[4] = {+1, +1, +1, +1};
 int verticalMove[4] = {+1, -1, -1, +1};
 int rotationMove[4] = {+1, +1, -1, -1};
 
+// Control variables
+int manualControl;
+float anchorHeading = 0;
+
 // Create the motor shield object with the default I2C address
 Adafruit_MotorShield AFMS = Adafruit_MotorShield(); 
 Adafruit_DCMotor *motor[4] = {AFMS.getMotor(MOTOR_FL), AFMS.getMotor(MOTOR_FR), AFMS.getMotor(MOTOR_BL), AFMS.getMotor(MOTOR_BR)};
+
+// Initialise the compass
+Adafruit_HMC5883_Unified compass = Adafruit_HMC5883_Unified(8431);
 
 void setup() {
   // Initialize serial communications
@@ -51,11 +62,21 @@ void setup() {
 
   AFMS.begin();  // create with the default frequency 1.6KHz
 
+  /* Initialise the compass */
+  if(!compass.begin())
+  {
+    Serial.println("HMC5883 compass not detected, stopping.");
+    while(1);
+  }
+
   // Initialize the ports where we will read receiver input
   pinMode(PIN_CH1, INPUT);
   pinMode(PIN_CH2, INPUT);
   pinMode(PIN_CH3, INPUT);
   pinMode(PIN_CH4, INPUT);
+  
+  // Automated control initialisation
+  manualControl = 1;
 }
 
 void HolonomicSpin(int mm[4]) {
@@ -69,22 +90,10 @@ void HolonomicSpin(int mm[4]) {
     if(abs(mm[i]) > (10 * MOTOR_MAX) / 100) {
       motor[i]->setSpeed(abs(mm[i]));
       motor[i]->run(mm[i] > 0? FORWARD : BACKWARD);
-#ifdef DEBUG
-      Serial.print("Motor #");
-      Serial.print(i);
-      Serial.print(": ");
-      Serial.println(mm[i]);
-#endif
-} else {
+    } else {
       motor[i]->setSpeed(0);
       motor[i]->run(RELEASE);
 
-#ifdef DEBUG
-      Serial.print("Motor #");
-      Serial.print(i);
-      Serial.print(": ");
-      Serial.println("STOP");
-#endif
     }
   }
 }
@@ -145,15 +154,20 @@ void vehicleMove(int valX, int valY, int valRotate) {
 }
 
 void loop() {
+  sensors_event_t compassEvent;
+  float heading;
+
   // Read three of the channels of the RC receiver, we only use three - but you can add a fourth one if needed
 
-  int channelHorizontal = pulseIn(PIN_CH4, HIGH, 25000); // X avis movement
+  int channelHorizontal = pulseIn(PIN_CH4, HIGH, 25000); // X axis movement
   int channelVertical = pulseIn(PIN_CH2, HIGH, 25000); // Y axis movement
   int channelRotate = pulseIn(PIN_CH1, HIGH, 25000); // Rotation
   
   // If we are receiving control commands from the RC controller bypass autonomous mode
 
   if(channelHorizontal || channelVertical || channelRotate) {
+    
+    manualControl = 1;
     
     // Map all readings to a -100 .. +100 range so it is easy to deal with
 
@@ -177,6 +191,18 @@ void loop() {
     vehicleMove(directionHorizontal, directionVertical, angleRotate);
     
   } else {
+    // Autonomous control
+    compass.getEvent(&compassEvent);
+    heading = atan2(compassEvent.magnetic.y, compassEvent.magnetic.x);
+    
+    if(manualControl = 1) {
+      // We just came here from being controlled by the RC. Get our anchor heading
+        anchorHeading = heading;
+    } else {
+      // Get our current heading and correct it so we remain close to anchor
+      vehicleMove(0, 0, anchorHeading - heading);
+    }
+    
 #ifdef DEBUG
     Serial.println("TODO: Autonomous control");
 #endif
