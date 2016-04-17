@@ -176,7 +176,7 @@ void loop() {
     int angleRotate = map(channelRotate, PWM_LOW, PWM_HIGH, -100, 100);
 
 #ifdef DEBUG    
-    Serial.print("Manual control ");
+    Serial.print("MANUAL: RC control ");
 
     Serial.print("H: ");
     Serial.print(directionHorizontal);
@@ -198,15 +198,19 @@ void loop() {
     if(manualControl = 1) {
       // We just came here from being controlled by the RC. Get our anchor heading
         anchorHeading = heading;
+#ifdef DEBUG
+        Serial.print("AUTONOMOUS: Set new anchor heading: ");
+        Serial.println(anchorHeading);
+#endif
+
     } else {
       // Get our current heading and correct it so we remain close to anchor
+#ifdef DEBUG
+      Serial.print("AUTONOMOUS: Correcting heading by ");
+      Serial.println(anchorHeading - heading);
+#endif
       vehicleMove(0, 0, anchorHeading - heading);
     }
-    
-#ifdef DEBUG
-    Serial.println("TODO: Autonomous control");
-#endif
-    vehicleMove(0, 0, 0);
   }
 
 #ifdef DEBUG  
