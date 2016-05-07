@@ -17,7 +17,8 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_HMC5883_U.h>
 
-#define DEBUG
+#undef DEBUG
+//#define DEBUG
 
 #define PIN_CH1 7
 #define PIN_CH2 6
@@ -32,17 +33,23 @@
 #define PWM_LOW 1000
 #define PWM_HIGH 2000
 
+#define RC_THRESHOLD 10 // Minimum value of an RC input to move to manual control
+#define MOTOR_THRESHOLD 5 // Minimum value of a motor input to spin, smaller than this is considered noise
+
 #define MOTOR_MAX 255
 
 void vehicleMove(int valX, int valY, int valRotate);
+void vehicleStop();
 void HolonomicMove(int xComponent, int yComponent, int rotationComponent);
 void HolonomicSpin(int mm[4]);
 void HolonomicSimplify(int mm[4]);
+int rotationalDeviation(int initial, int target);
 
-// Holonomic matrix
-int horizontalMove[4] = {+1, +1, +1, +1};
-int verticalMove[4] = {+1, -1, -1, +1};
-int rotationMove[4] = {+1, +1, -1, -1};
+// Holonomic matrix - connect all motors to the motor shield in the same position. If movement is not as expected change the connections (do not change the table below).
+
+int verticalMove[4] =   {-1, -1, -1, -1};
+int horizontalMove[4] = {-1, +1, +1, -1};
+int rotationMove[4] =   {-1, +1, -1, +1};
 
 // Control variables
 int manualControl;
@@ -58,6 +65,7 @@ Adafruit_HMC5883_Unified compass = Adafruit_HMC5883_Unified(8431);
 void setup() {
   // Initialize serial communications
   Serial.begin(9600);
+  
   Serial.println("Initializing input...");
 
   AFMS.begin();  // create with the default frequency 1.6KHz
@@ -77,23 +85,51 @@ void setup() {
   
   // Automated control initialisation
   manualControl = 1;
+  
+#ifdef DEBUG
+  Serial.println("DEBUG mode enabled");
+#endif
+
+  Serial.println("Initialization completed");
+}
+
+void dumpContent(int mm[4]) {
+  Serial.print("MM values: ");
+  for(int i=0; i < 4; i++) {
+    Serial.print(mm[i]);
+    Serial.print(",");
+  }
+  Serial.println("");
 }
 
 void HolonomicSpin(int mm[4]) {
   HolonomicSimplify(&mm);
+  
+#ifdef DEBUG
+  dumpContent(mm);
+#endif
 
   for(int i = 0; i < 4; i++) {
     
     // Expand range to motor limits
     mm[i] = map(mm[i], -100, 100, -1 * MOTOR_MAX, MOTOR_MAX);
     
-    if(abs(mm[i]) > (10 * MOTOR_MAX) / 100) {
+    if(abs(mm[i]) > (MOTOR_THRESHOLD * MOTOR_MAX) / 100) {
       motor[i]->setSpeed(abs(mm[i]));
       motor[i]->run(mm[i] > 0? FORWARD : BACKWARD);
+#ifdef DEBUG
+      Serial.print("Spinning motor #");
+      Serial.print(i);
+      Serial.print(": ");
+      Serial.println(mm[i]);
+#endif
     } else {
       motor[i]->setSpeed(0);
       motor[i]->run(RELEASE);
-
+#ifdef DEBUG
+      Serial.print("Stopping motor #");
+      Serial.println(i);
+#endif
     }
   }
 }
@@ -153,6 +189,16 @@ void vehicleMove(int valX, int valY, int valRotate) {
   HolonomicMove(valX, valY, valRotate);
 }
 
+void vehicleStop() {
+  vehicleMove(0, 0, 0);
+}
+
+// From: http://gmc.yoyogames.com/index.php?showtopic=532420
+
+int rotationalDeviation(int initial, int target) {
+  return (((target - initial) % 360) + 360 + 180) % 360 - 180;
+}
+
 void loop() {
   sensors_event_t compassEvent;
   float heading;
@@ -162,18 +208,19 @@ void loop() {
   int channelHorizontal = pulseIn(PIN_CH4, HIGH, 25000); // X axis movement
   int channelVertical = pulseIn(PIN_CH2, HIGH, 25000); // Y axis movement
   int channelRotate = pulseIn(PIN_CH1, HIGH, 25000); // Rotation
+
+  int directionHorizontal = map(channelHorizontal, PWM_LOW, PWM_HIGH, -100, 100);
+  int directionVertical = map(channelVertical, PWM_LOW, PWM_HIGH, -100, 100);
+  int angleRotate = map(channelRotate, PWM_LOW, PWM_HIGH, -100, 100);
   
   // If we are receiving control commands from the RC controller bypass autonomous mode
 
-  if(channelHorizontal || channelVertical || channelRotate) {
+  if(abs(directionHorizontal) > RC_THRESHOLD || abs(directionVertical) > RC_THRESHOLD || abs(angleRotate) > RC_THRESHOLD) {
     
     manualControl = 1;
     
     // Map all readings to a -100 .. +100 range so it is easy to deal with
 
-    int directionHorizontal = map(channelHorizontal, PWM_LOW, PWM_HIGH, -100, 100);
-    int directionVertical = map(channelVertical, PWM_LOW, PWM_HIGH, -100, 100);
-    int angleRotate = map(channelRotate, PWM_LOW, PWM_HIGH, -100, 100);
 
 #ifdef DEBUG    
     Serial.print("MANUAL: RC control ");
@@ -193,27 +240,44 @@ void loop() {
   } else {
     // Autonomous control
     compass.getEvent(&compassEvent);
-    heading = atan2(compassEvent.magnetic.y, compassEvent.magnetic.x);
+    heading = int(atan2(compassEvent.magnetic.y, compassEvent.magnetic.x) * 180/M_PI + 360) % 360; // Convert radians to degrees
     
-    if(manualControl = 1) {
-      // We just came here from being controlled by the RC. Get our anchor heading
-        anchorHeading = heading;
+    if(manualControl == 1) {
+      manualControl = 0;
+      // We just came here from being controlled by the RC. Stop all engines and get our anchor heading
+
+      vehicleStop();
+
+      anchorHeading = heading;
 #ifdef DEBUG
-        Serial.print("AUTONOMOUS: Set new anchor heading: ");
-        Serial.println(anchorHeading);
+      Serial.print("AUTONOMOUS: Set new anchor heading: ");
+      Serial.println(anchorHeading);
 #endif
 
     } else {
       // Get our current heading and correct it so we remain close to anchor
+      int deviation = rotationalDeviation(anchorHeading, heading);
+
+      if(abs(deviation) > 1) {
 #ifdef DEBUG
-      Serial.print("AUTONOMOUS: Correcting heading by ");
-      Serial.println(anchorHeading - heading);
+        Serial.print("AUTONOMOUS: Correcting heading by ");
+        Serial.println(deviation);
 #endif
-      vehicleMove(0, 0, anchorHeading - heading);
+        vehicleMove(0, 0, deviation);
+      } else {
+        vehicleStop();
+
+#ifdef DEBUG
+        Serial.print("AUTONOMOUS: Not moving, only a small deviation: ");
+        Serial.println(deviation);
+#endif
+      }
+      
     }
   }
 
 #ifdef DEBUG  
+ Serial.println("Debug sleeping");
  delay(500);
 #endif
 }

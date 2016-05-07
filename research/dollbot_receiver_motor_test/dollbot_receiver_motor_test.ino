@@ -23,6 +23,7 @@
 
 #define PWM_LOW 1000
 #define PWM_HIGH 2000
+#define RC_THRESHOLD 10
 
 #define AXIS_X 0
 #define AXIS_Y 1
@@ -118,15 +119,16 @@ void loop() {
   int channelVertical = pulseIn(PIN_CH2, HIGH, 25000); // Y axis movement
   int channelRotate = pulseIn(PIN_CH1, HIGH, 25000); // Rotation
   
+  int directionHorizontal = map(channelHorizontal, PWM_LOW, PWM_HIGH, -100, 100);
+  int directionVertical = map(channelVertical, PWM_LOW, PWM_HIGH, -100, 100);
+  int angleRotate = map(channelRotate, PWM_LOW, PWM_HIGH, -100, 100);
+  
   // If we are receiving control commands from the RC controller bypass autonomous mode
 
-  if(channelHorizontal || channelVertical || channelRotate) {
+  if(abs(directionHorizontal) > RC_THRESHOLD || abs(directionVertical) > RC_THRESHOLD || abs(angleRotate) > RC_THRESHOLD) {
     
     // Map all readings to a -100 .. +100 range so it is easy to deal with
 
-    int directionHorizontal = map(channelHorizontal, PWM_LOW, PWM_HIGH, -100, 100);
-    int directionVertical = map(channelVertical, PWM_LOW, PWM_HIGH, -100, 100);
-    int angleRotate = map(channelRotate, PWM_LOW, PWM_HIGH, -100, 100);
 
 #ifdef DEBUG    
     Serial.print("Manual control ");
