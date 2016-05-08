@@ -17,8 +17,8 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_HMC5883_U.h>
 
-#define DEBUG // Define if you are debugging the project - note that a huge amount of serial debugging plus a 500ms delay is added to each loop to be able to follow serial output, so debugging heavily interferes with any real-time operation.
-#define DEBUG_DRYDOCK // Define if you are doing workbench testing with no need to have actual motor movement. Generally you do not want the water-designed motors to be spinning out of water for a long period of time.
+// #define DEBUG // Define if you are debugging the project - note that a huge amount of serial debugging plus a 500ms delay is added to each loop to be able to follow serial output, so debugging heavily interferes with any real-time operation.
+// #define DEBUG_DRYDOCK // Define together with DEBUG if you are doing workbench testing with no need to have actual motor movement. Generally you do not want the water-designed motors to be spinning out of water for a long period of time.
 
 #define PIN_CH1 7
 #define PIN_CH2 6
@@ -30,7 +30,7 @@
 #define MOTOR_BL 3
 #define MOTOR_BR 4
 
-// These two values need to be adjusted depending on your RC receiver.
+// These two values need to be adjusted depending on your RC receiver. Typical values are 1000-2000, see the Sparkfun article referenced above.
 #define PWM_LOW 1000
 #define PWM_HIGH 1900
 
