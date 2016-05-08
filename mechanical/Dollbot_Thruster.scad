@@ -299,13 +299,15 @@ module turbine() {
   difference() {
     union() {
       cylinder(r=turbine_radius, h=turbine_height - 2 * thruster_pin_depth);
+
       // Top protuberance
       translate([0,0,turbine_height - (2 * thruster_pin_depth)]) {
-        cylinder(r=turbine_top_radius, h = 2 * thruster_pin_depth);
+//        cylinder(r=turbine_top_radius, h = 2 * thruster_pin_depth);
         cylinder(r1=turbine_radius, r2=turbine_top_radius, h=thruster_pin_depth * 0.9);
       }
 
-      // Rotate 6 times and do the sides
+        
+      // Rotate to fit each paddle and do the sides
       for(angle =  [360/turbine_wings: 360/turbine_wings : 360]) {
           rotate(angle, [0, 0, 1]) {
             translate([0, -turbine_wing_width/2, turbine_bottom_offset]) {
@@ -327,7 +329,7 @@ module turbine() {
    the turbine and the drilling stencil */
 
 thruster(true);
-/*
+
 translate([0, 0, piece_separation * 1.5]) {
   turbine();
 }
@@ -335,4 +337,3 @@ translate([0, 0, piece_separation * 1.5]) {
 translate([0, 0, piece_separation]) {
   drilling_stencil();
 }
-*/
