@@ -1,7 +1,7 @@
 /*
   dollbot_anchor_test: Anchor dollbot in a specific heading
 
-  Control the dollbot via the remote control interface, once control is released the dollbot will stay anchored in the same position using its built-in
+  Control the dollbot via the remote control interface, once control is released the dollbot will stay anchored in the same orientation using its built-in
   magnetic compass.
   
   http://splashbots.blogspot.com/
